@@ -15,7 +15,6 @@ axios.defaults.baseURL = API_URL;
 
 const getAuthToken = async () => {
   const res = await axios.get(`/api2/login/?username=${LOGIN}&password=${PASSWORD}`);
-  console.log("auth data", res.data);
   return res.data.accessToken;
 };
 
@@ -25,10 +24,29 @@ const fetchDataBase = async () => {
   const res = await axios.get(`/api2/appointments/report?StartDateFrom=${startDate}&_limit=50`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  console.log(res.data);
+  return res.data;
+};
+
+const getVisitorList = async () => {
+  const data = await fetchDataBase();
+  const visitors = data.map((client) => {
+    const clientData = {
+      name: client.client.name,
+      email: client.client.email,
+      phone: client.client.phone,
+      visitTime: {
+        start: client.startDate,
+        end: client.endDate,
+      },
+      createDate: client.createDate,
+    };
+    return clientData;
+  });
+  console.log("visitors", visitors);
+  return visitors;
 };
 
 app.listen(PORT, () => {
-  fetchDataBase();
   console.log("Server is running!");
+  getVisitorList();
 });
