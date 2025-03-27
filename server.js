@@ -3,6 +3,7 @@ const express = require("express");
 const axios = require("axios");
 const cron = require("node-cron");
 const { readData, addUser, deleteByEmail } = require("./services/jsonService");
+const { cancelEmailNotification, scheduleEmailNotification } = require("./services/sendpulse");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,7 +13,7 @@ const PASSWORD = process.env.PASSWORD;
 
 axios.defaults.baseURL = API_URL;
 
-const filename = "./data/dataExample.json";
+const fakeData = "./data/fakeData.json";
 const savedRecords = "./data/savedRecords.json";
 
 let prevDate;
@@ -43,8 +44,7 @@ const getRecordsList = async (data) => {
   const records = data.map((client) => {
     const clientData = {
       name: client.client.name,
-      // email: client.client.email,
-      email: "svitalii138@gmail.com",
+      email: client.client.email,
       phone: client.client.phone,
       eventDate: client.startDate,
       createDate: client.createDate,
@@ -63,7 +63,7 @@ const filterByCreateDate = (arr, date) => {
 const checkAndSendEmails = async () => {
   try {
     // const data = await fetchDataBase();
-    const data = await readData(filename);
+    const data = await readData(fakeData);
 
     const recordList = await getRecordsList(data);
     const recToCheck = readData(savedRecords);
@@ -77,6 +77,7 @@ const checkAndSendEmails = async () => {
       recToCheck.forEach((rec) => {
         const index = recordList.findIndex((savedRec) => savedRec.email === rec.email);
         if (index === -1) {
+          cancelEmailNotification(rec);
           deleteByEmail(rec.email, savedRecords);
           console.log("Cancel notification for", rec.email);
         }
@@ -88,7 +89,7 @@ const checkAndSendEmails = async () => {
 
       filteredRecordList.forEach((newRec) => {
         console.log(`Send email to ${newRec.email}`);
-
+        scheduleEmailNotification(newRec);
         addUser(newRec, savedRecords);
       });
     } else {
