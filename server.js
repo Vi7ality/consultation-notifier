@@ -1,8 +1,8 @@
 require("dotenv").config();
 const express = require("express");
 const axios = require("axios");
-const fs = require("fs");
 const cron = require("node-cron");
+const { readData, addUser, deleteByEmail } = require("./services/jsonService");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,6 +11,11 @@ const LOGIN = process.env.LOGIN;
 const PASSWORD = process.env.PASSWORD;
 
 axios.defaults.baseURL = API_URL;
+
+const filename = "./data/dataExample.json";
+const savedRecords = "./data/savedRecords.json";
+
+let prevDate;
 
 const getAuthToken = async () => {
   try {
@@ -38,7 +43,8 @@ const getRecordsList = async (data) => {
   const records = data.map((client) => {
     const clientData = {
       name: client.client.name,
-      email: client.client.email,
+      // email: client.client.email,
+      email: "svitalii138@gmail.com",
       phone: client.client.phone,
       eventDate: client.startDate,
       createDate: client.createDate,
@@ -50,38 +56,55 @@ const getRecordsList = async (data) => {
 
 const filterByCreateDate = (arr, date) => {
   const filterDate = new Date(date);
+  console.log("filter date", filterDate);
   return arr.filter((item) => new Date(item.createDate) > filterDate);
 };
 
-let prevDate;
-
 const checkAndSendEmails = async () => {
   try {
-    const data = await fetchDataBase();
+    // const data = await fetchDataBase();
+    const data = await readData(filename);
+
     const recordList = await getRecordsList(data);
+    const recToCheck = readData(savedRecords);
+
     if (recordList.length > 0) {
       if (!prevDate) {
+        console.log("PrevDate is empty. Set new date");
         prevDate = new Date();
       }
+
+      recToCheck.forEach((rec) => {
+        const index = recordList.findIndex((savedRec) => savedRec.email === rec.email);
+        if (index === -1) {
+          deleteByEmail(rec.email, savedRecords);
+          console.log("Cancel notification for", rec.email);
+        }
+      });
+
       const filteredRecordList = filterByCreateDate(recordList, prevDate);
+
       console.log("Found new records", filteredRecordList);
-      filteredRecordList.forEach(({ email }) => {
-        console.log(`Send email to ${email}`);
+
+      filteredRecordList.forEach((newRec) => {
+        console.log(`Send email to ${newRec.email}`);
+
+        addUser(newRec, savedRecords);
       });
     } else {
       console.log("No record was found");
     }
   } catch (error) {
-    console.error("Error in chacking and sending email", error.message);
+    console.error("Error in checking and sending email", error.message);
   }
 };
 
 cron.schedule("*/1 * * * *", async () => {
-  console.log("Check API data", new Date());
+  console.log("Check API data", new Date().toString());
   await checkAndSendEmails();
   prevDate = new Date();
 });
 
-app.listen(PORT, () => {
-  console.log("Server is running!");
-});
+// app.listen(PORT, () => {
+//   console.log("Server is running!");
+// });
