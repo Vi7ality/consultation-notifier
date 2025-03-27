@@ -1,7 +1,6 @@
 require("dotenv").config();
 const express = require("express");
 const axios = require("axios");
-// const nodemailer = require("nodemailer");
 const fs = require("fs");
 const cron = require("node-cron");
 
@@ -14,17 +13,25 @@ const PASSWORD = process.env.PASSWORD;
 axios.defaults.baseURL = API_URL;
 
 const getAuthToken = async () => {
-  const res = await axios.get(`/api2/login/?username=${LOGIN}&password=${PASSWORD}`);
-  return res.data.accessToken;
+  try {
+    const res = await axios.get(`/api2/login/?username=${LOGIN}&password=${PASSWORD}`);
+    return res.data.accessToken;
+  } catch (error) {
+    console.error("Error in getting auth token!", error);
+  }
 };
 
 const fetchDataBase = async () => {
-  const token = await getAuthToken();
-  const startDate = new Date().toISOString().split("T")[0];
-  const res = await axios.get(`/api2/appointments/report?StartDateFrom=${startDate}&_limit=100`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return res.data;
+  try {
+    const token = await getAuthToken();
+    const startDate = new Date().toISOString().split("T")[0];
+    const res = await axios.get(`/api2/appointments/report?StartDateFrom=${startDate}&_limit=100`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  } catch (error) {
+    console.error("Error in fetching database!", error);
+  }
 };
 
 const getRecordsList = async (data) => {
@@ -33,10 +40,7 @@ const getRecordsList = async (data) => {
       name: client.client.name,
       email: client.client.email,
       phone: client.client.phone,
-      visitTime: {
-        start: client.startDate,
-        end: client.endDate,
-      },
+      eventDate: client.startDate,
       createDate: client.createDate,
     };
     return clientData;
@@ -44,27 +48,38 @@ const getRecordsList = async (data) => {
   return records;
 };
 
-const filterByCreateDate = (data, date) => {
-  // const currentDate = new Date();
+const filterByCreateDate = (arr, date) => {
   const filterDate = new Date(date);
-  return data.filter((item) => new Date(item.createDate) > filterDate);
+  return arr.filter((item) => new Date(item.createDate) > filterDate);
 };
 
-const prevDate = "2025-03-19T15:58:50.673";
+let prevDate;
 
 const checkAndSendEmails = async () => {
-  const data = await fetchDataBase();
-  const recordList = await getRecordsList(data);
-  const filteredRecordList = filterByCreateDate(recordList, prevDate);
-  console.log("Found records", filteredRecordList);
-  filteredRecordList.forEach(({ email }) => {
-    console.log(`Send email to ${email}`);
-  });
+  try {
+    const data = await fetchDataBase();
+    const recordList = await getRecordsList(data);
+    if (recordList.length > 0) {
+      if (!prevDate) {
+        prevDate = new Date();
+      }
+      const filteredRecordList = filterByCreateDate(recordList, prevDate);
+      console.log("Found new records", filteredRecordList);
+      filteredRecordList.forEach(({ email }) => {
+        console.log(`Send email to ${email}`);
+      });
+    } else {
+      console.log("No record was found");
+    }
+  } catch (error) {
+    console.error("Error in chacking and sending email", error.message);
+  }
 };
 
 cron.schedule("*/1 * * * *", async () => {
   console.log("Check API data", new Date());
   await checkAndSendEmails();
+  prevDate = new Date();
 });
 
 app.listen(PORT, () => {
