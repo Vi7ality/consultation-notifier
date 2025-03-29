@@ -75,6 +75,11 @@ const checkAndSendEmails = async () => {
       }
 
       recToCheck.forEach((rec) => {
+        if (new Date(rec.eventDate) < new Date()) {
+          deleteByEmail(rec.email, savedRecords);
+          console.log("Old event deleted", rec);
+          return;
+        }
         const index = recordList.findIndex((savedRec) => savedRec.email === rec.email);
         if (index === -1) {
           cancelEmailNotification(rec);
