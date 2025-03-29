@@ -9,7 +9,6 @@ const scheduleEmailNotification = async ({ name, email, phone, eventDate }) => {
   try {
     await axios.post(`https://events.sendpulse.com/events/id/${NOTIFICATION_API_ID}`, {
       email: email,
-      // email: "vi7lancer@gmail.com",
       phone: phone,
       event_date: date,
       event_time: time,
@@ -25,7 +24,6 @@ const cancelEmailNotification = async ({ name, email, phone, eventDate }, reason
   try {
     await axios.post(`https://events.sendpulse.com/events/id/${CANCELATION_API_ID}`, {
       email: email,
-      // email: "vi7lancer@gmail.com",
       phone: phone,
       event_date: date,
       event_time: time,
