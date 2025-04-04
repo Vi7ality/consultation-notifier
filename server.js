@@ -1,10 +1,10 @@
 require("dotenv").config();
 const cron = require("node-cron");
+const express = require("express");
+const { DateTime } = require("luxon");
 const { readData, addUser, deleteByEmail } = require("./services/jsonService");
 const { cancelEmailNotification, scheduleEmailNotification } = require("./services/sendpulse");
-const { formatDate } = require("./utils");
 const { fetchDataBase } = require("./services/database");
-const express = require("express");
 
 // const fakeData = "./data/fakeData.json";
 const savedRecords = "./data/savedRecords.json";
@@ -12,23 +12,19 @@ const savedRecords = "./data/savedRecords.json";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-let prevDate = new Date();
+let prevDate = DateTime.now().setZone("Europe/Kyiv");
 
 const getRecordsList = (data) =>
   data.map(({ client, startDate, createDate }) => ({
     name: client.name,
     email: client.email,
     phone: client.phone,
-    eventDate: formatDate(startDate),
-    createDate: formatDate(createDate),
+    eventDate: DateTime.fromISO(startDate, { zone: "Europe/Kyiv" }),
+    createDate: DateTime.fromISO(createDate, { zone: "Europe/Kyiv" }),
   }));
 
 const filterNewRecords = (records, lastChecked) =>
-  records.filter(({ createDate }) => {
-    const created = new Date(createDate).getTime();
-    const checked = lastChecked.getTime();
-    return created > checked;
-  });
+  records.filter(({ createDate }) => createDate > lastChecked);
 
 const checkAndSendEmails = async () => {
   try {
@@ -36,17 +32,17 @@ const checkAndSendEmails = async () => {
     const data = await fetchDataBase();
     const recordList = getRecordsList(data);
     const savedRecordsList = readData(savedRecords);
-    const now = new Date();
+    const now = DateTime.now().setZone("Europe/Kyiv");
 
     savedRecordsList.forEach((rec) => {
-      const eventDate = new Date(rec.eventDate);
+      const eventDate = DateTime.fromISO(rec.eventDate, { zone: "Europe/Kyiv" });
 
       if (eventDate < now) {
         deleteByEmail(rec.email, savedRecords);
         console.log("Deleted old event:", rec);
       } else if (
         !recordList.some(
-          ({ email, eventDate }) => email === rec.email && eventDate === rec.eventDate
+          ({ email, eventDate: evDate }) => email === rec.email && evDate.toISO() === rec.eventDate
         )
       ) {
         cancelEmailNotification(rec);
@@ -59,11 +55,16 @@ const checkAndSendEmails = async () => {
 
     if (newRecords.length > 0) {
       console.log("New records found:", newRecords);
-      console.log("Current time", prevDate.getTime());
       newRecords.forEach((rec) => {
-        console.log("createDate", rec.createDate.getTime());
         scheduleEmailNotification(rec);
-        addUser(rec, savedRecords);
+        addUser(
+          {
+            ...rec,
+            eventDate: rec.eventDate.toISO(),
+            createDate: rec.createDate.toISO(),
+          },
+          savedRecords
+        );
       });
     }
 
@@ -73,8 +74,11 @@ const checkAndSendEmails = async () => {
   }
 };
 
-cron.schedule("*/5 * * * *", async () => {
-  console.log("Checking API data:", new Date().toLocaleString());
+cron.schedule("*/1 * * * *", async () => {
+  console.log(
+    "Checking API data:",
+    DateTime.now().setZone("Europe/Kyiv").toLocaleString(DateTime.DATETIME_SHORT)
+  );
   await checkAndSendEmails();
 });
 
