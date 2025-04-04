@@ -5,7 +5,7 @@ const { cancelEmailNotification, scheduleEmailNotification } = require("./servic
 const { formatDate } = require("./utils");
 const { fetchDataBase } = require("./services/database");
 
-const fakeData = "./data/fakeData.json";
+// const fakeData = "./data/fakeData.json";
 const savedRecords = "./data/savedRecords.json";
 
 let prevDate = new Date();
@@ -24,8 +24,8 @@ const filterNewRecords = (records, lastChecked) =>
 
 const checkAndSendEmails = async () => {
   try {
-    const data = await readData(fakeData);
-    // const data = await fetchDataBase();
+    // const data = await readData(fakeData);
+    const data = await fetchDataBase();
     const recordList = getRecordsList(data);
     const savedRecordsList = readData(savedRecords);
     const now = new Date();
@@ -63,7 +63,7 @@ const checkAndSendEmails = async () => {
   }
 };
 
-cron.schedule("*/1 * * * *", async () => {
+cron.schedule("*/5 * * * *", async () => {
   console.log("Checking API data:", new Date().toISOString());
   await checkAndSendEmails();
 });
