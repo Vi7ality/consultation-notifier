@@ -21,7 +21,7 @@ const scheduleEmailNotification = async ({ name, email, phone, eventDate }) => {
     );
     console.log(`Sent email notification to ${email}, result: ${response.data.result}`);
   } catch (error) {
-    console.error("Failing to schedule event notification!", error);
+    console.error("Failing to schedule event notification!", error.message);
   }
 };
 
@@ -43,7 +43,7 @@ const cancelEmailNotification = async ({ name, email, phone, eventDate }, reason
     );
     console.log(`Sent cancel email notification to ${email}, result: ${response.data.result}`);
   } catch (error) {
-    console.error("Failing to cancel event notification!", error);
+    console.error("Failing to cancel event notification!", error.message);
   }
 };
 

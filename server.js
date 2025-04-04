@@ -27,8 +27,6 @@ const filterNewRecords = (records, lastChecked) =>
   records.filter(({ createDate }) => {
     const created = new Date(createDate).getTime();
     const checked = lastChecked.getTime();
-    console.log("created date", created);
-    console.log("checked date", checked);
     return created > checked;
   });
 
@@ -61,7 +59,9 @@ const checkAndSendEmails = async () => {
 
     if (newRecords.length > 0) {
       console.log("New records found:", newRecords);
+      console.log("Current time", prevDate.getTime());
       newRecords.forEach((rec) => {
+        console.log("createDate", rec.createDate.getTime());
         scheduleEmailNotification(rec);
         addUser(rec, savedRecords);
       });
