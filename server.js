@@ -27,6 +27,8 @@ const filterNewRecords = (records, lastChecked) =>
   records.filter(({ createDate }) => {
     const created = new Date(createDate).getTime();
     const checked = lastChecked.getTime();
+    console.log("created date", created);
+    console.log("checked date", checked);
     return created > checked;
   });
 
