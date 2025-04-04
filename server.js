@@ -5,6 +5,7 @@ const { DateTime } = require("luxon");
 const { readData, addUser, deleteByEmail } = require("./services/jsonService");
 const { cancelEmailNotification, scheduleEmailNotification } = require("./services/sendpulse");
 const { fetchDataBase } = require("./services/database");
+const { formatDate } = require("./utils");
 
 // const fakeData = "./data/fakeData.json";
 const savedRecords = "./data/savedRecords.json";
@@ -19,12 +20,15 @@ const getRecordsList = (data) =>
     name: client.name,
     email: client.email,
     phone: client.phone,
-    eventDate: DateTime.fromISO(startDate, { zone: "Europe/Kyiv" }),
-    createDate: DateTime.fromISO(createDate, { zone: "Europe/Kyiv" }),
+    eventDate: formatDate(startDate),
+    createDate: formatDate(createDate),
   }));
 
 const filterNewRecords = (records, lastChecked) =>
-  records.filter(({ createDate }) => createDate > lastChecked);
+  records.filter(({ createDate }) => {
+    const create = DateTime.fromISO(createDate, { zone: "Europe/Kyiv" });
+    return create > lastChecked;
+  });
 
 const checkAndSendEmails = async () => {
   try {
@@ -42,7 +46,7 @@ const checkAndSendEmails = async () => {
         console.log("Deleted old event:", rec);
       } else if (
         !recordList.some(
-          ({ email, eventDate: evDate }) => email === rec.email && evDate.toISO() === rec.eventDate
+          ({ email, eventDate }) => email === rec.email && eventDate === rec.eventDate
         )
       ) {
         cancelEmailNotification(rec);
@@ -57,14 +61,7 @@ const checkAndSendEmails = async () => {
       console.log("New records found:", newRecords);
       newRecords.forEach((rec) => {
         scheduleEmailNotification(rec);
-        addUser(
-          {
-            ...rec,
-            eventDate: rec.eventDate.toISO(),
-            createDate: rec.createDate.toISO(),
-          },
-          savedRecords
-        );
+        addUser(rec, savedRecords);
       });
     }
 
