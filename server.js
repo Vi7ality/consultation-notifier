@@ -24,7 +24,11 @@ const getRecordsList = (data) =>
   }));
 
 const filterNewRecords = (records, lastChecked) =>
-  records.filter(({ createDate }) => new Date(createDate) > lastChecked);
+  records.filter(({ createDate }) => {
+    const created = new Date(createDate).getTime();
+    const checked = lastChecked.getTime();
+    return created > checked;
+  });
 
 const checkAndSendEmails = async () => {
   try {
