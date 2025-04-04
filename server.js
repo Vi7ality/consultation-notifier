@@ -68,7 +68,7 @@ const checkAndSendEmails = async () => {
 };
 
 cron.schedule("*/5 * * * *", async () => {
-  console.log("Checking API data:", new Date().toISOString());
+  console.log("Checking API data:", new Date().toLocaleString());
   await checkAndSendEmails();
 });
 
