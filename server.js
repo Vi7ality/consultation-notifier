@@ -74,7 +74,7 @@ const checkAndSendEmails = async () => {
   }
 };
 
-cron.schedule("*/1 * * * *", async () => {
+cron.schedule("*/5 * * * *", async () => {
   console.log(
     "Checking API data:",
     DateTime.now().setZone("Europe/Kyiv").toLocaleString(DateTime.DATETIME_SHORT)
