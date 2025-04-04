@@ -4,9 +4,13 @@ const { readData, addUser, deleteByEmail } = require("./services/jsonService");
 const { cancelEmailNotification, scheduleEmailNotification } = require("./services/sendpulse");
 const { formatDate } = require("./utils");
 const { fetchDataBase } = require("./services/database");
+const express = require("express");
 
 // const fakeData = "./data/fakeData.json";
 const savedRecords = "./data/savedRecords.json";
+
+const app = express();
+const PORT = process.env.PORT || 3000;
 
 let prevDate = new Date();
 
@@ -66,4 +70,8 @@ const checkAndSendEmails = async () => {
 cron.schedule("*/5 * * * *", async () => {
   console.log("Checking API data:", new Date().toISOString());
   await checkAndSendEmails();
+});
+
+app.listen(PORT, () => {
+  console.log("Server is running!");
 });
