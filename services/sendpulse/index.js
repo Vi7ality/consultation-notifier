@@ -4,7 +4,7 @@ require("dotenv").config();
 const NOTIFICATION_API_ID = process.env.NOTIFICATION_API_ID;
 const CANCELATION_API_ID = process.env.CANCELATION_API_ID;
 
-const scheduleEmailNotification = async ({ name, email, phone, eventDate }) => {
+const scheduleEmailNotification = async ({ name, email, phone, eventDate, cause }) => {
   try {
     const [date, time] = eventDate.split("T");
     const formattedTime = time.split(":").slice(0, 2).join(":");
@@ -17,6 +17,7 @@ const scheduleEmailNotification = async ({ name, email, phone, eventDate }) => {
         event_date: date,
         event_time: formattedTime,
         client_name: name,
+        cause: cause,
       }
     );
     console.log(`Sent email notification to ${email}, result: ${response.data.result}`);
