@@ -1,6 +1,5 @@
 require("dotenv").config();
 const cron = require("node-cron");
-const express = require("express");
 const { DateTime } = require("luxon");
 const { readData, addUser, deleteByEmail } = require("./services/jsonService");
 const { cancelEmailNotification, scheduleEmailNotification } = require("./services/sendpulse");
@@ -77,8 +76,4 @@ cron.schedule("*/5 * * * *", async () => {
     DateTime.now().setZone("Europe/Kyiv").toLocaleString(DateTime.DATETIME_SHORT)
   );
   await checkAndSendEmails();
-});
-
-app.listen(PORT, () => {
-  console.log("Server is running!");
 });
