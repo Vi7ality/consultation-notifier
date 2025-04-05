@@ -9,7 +9,6 @@ const { formatDate } = require("./utils");
 // const fakeData = "./data/fakeData.json";
 const savedRecords = "./data/savedRecords.json";
 
-const app = express();
 const PORT = process.env.PORT || 3000;
 
 let prevDate = DateTime.now().setZone("Europe/Kyiv");
