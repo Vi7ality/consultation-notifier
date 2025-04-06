@@ -16,7 +16,7 @@ const getRecordsList = (data) =>
     phone: client.phone,
     eventDate: formatDate(startDate),
     createDate: formatDate(createDate),
-    cause: resultProcedures?.description || courses?.title || "",
+    cause: resultProcedures[0]?.procedureName || courses[0]?.title || "",
   }));
 
 const filterNewRecords = (records, savedRecordsList) =>
@@ -54,7 +54,6 @@ const checkAndSendEmails = async () => {
     const savedRecordsList = await getUsers();
 
     // const data = await readData(fakeData);
-    const now = DateTime.now().setZone("Europe/Kyiv");
 
     if (data.length === 0) {
       console.log("No record was found");
