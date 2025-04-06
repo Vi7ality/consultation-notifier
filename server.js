@@ -9,8 +9,6 @@ const { formatDate } = require("./utils");
 
 // const fakeData = "./data/fakeData.json";
 
-let prevDate = DateTime.now().setZone("Europe/Kyiv");
-
 const getRecordsList = (data) =>
   data.map(({ client, startDate, createDate, resultProcedures, courses }) => ({
     name: client.name,
@@ -21,14 +19,14 @@ const getRecordsList = (data) =>
     cause: resultProcedures?.description || courses?.title || "",
   }));
 
-const filterNewRecords = (records, lastChecked) =>
-  records.filter(({ createDate }) => {
-    const create = DateTime.fromISO(createDate, { zone: "Europe/Kyiv" });
-    return create > lastChecked;
+const filterNewRecords = (records, savedRecordsList) =>
+  records.filter((rec) => {
+    return !savedRecordsList.some(
+      (savedRec) => savedRec.email === rec.email && savedRec.eventDate === rec.eventDate
+    );
   });
 
-const manageSavedRecords = async (dbRecords = []) => {
-  const savedRecordsList = await getUsers();
+const manageSavedRecords = async (savedRecordsList, dbRecords = []) => {
   const now = DateTime.now().setZone("Europe/Kyiv");
 
   for (const rec of savedRecordsList) {
@@ -53,23 +51,28 @@ const manageSavedRecords = async (dbRecords = []) => {
 const checkAndSendEmails = async () => {
   try {
     const data = await fetchDataBase();
+    const savedRecordsList = await getUsers();
+
     // const data = await readData(fakeData);
     const now = DateTime.now().setZone("Europe/Kyiv");
 
     if (data.length === 0) {
       console.log("No record was found");
-      await manageSavedRecords();
+      await manageSavedRecords(savedRecordsList);
       return;
     }
 
     const recordList = getRecordsList(data);
 
-    await manageSavedRecords(recordList);
+    await manageSavedRecords(savedRecordsList, recordList);
 
-    const newRecords = filterNewRecords(recordList, prevDate);
+    const newRecords = filterNewRecords(recordList, savedRecordsList);
+    for (rec of newRecords) {
+      savedRecordsList.push(rec);
+    }
+    console.log("newRecords", newRecords.length);
 
     if (newRecords.length > 0) {
-      console.log("New records found:", newRecords);
       for (const rec of newRecords) {
         await scheduleEmailNotification(rec);
         await addUser({
@@ -80,8 +83,6 @@ const checkAndSendEmails = async () => {
         });
       }
     }
-
-    prevDate = now;
   } catch (error) {
     console.error("Error checking and sending emails:", error.message);
   }
