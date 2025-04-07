@@ -32,15 +32,15 @@ const manageSavedRecords = async (savedRecordsList, dbRecords = []) => {
   for (const rec of savedRecordsList) {
     const eventDate = DateTime.fromISO(rec.eventDate, { zone: "Europe/Kyiv" });
 
-    if (eventDate < now) {
+    const existsInDb = dbRecords.some((dbRec) => {
+      const dbEventDate = DateTime.fromISO(dbRec.eventDate, { zone: "Europe/Kyiv" });
+      return dbRec.email === rec.email && dbEventDate.toISO() === eventDate.toISO();
+    });
+
+    if (eventDate < now && !existsInDb) {
       await deleteByEmail(rec.email);
       console.log("🗑 Deleted old event:", rec);
-    } else if (
-      !dbRecords.some((dbRec) => {
-        const dbEventDate = DateTime.fromISO(dbRec.eventDate, { zone: "Europe/Kyiv" });
-        return dbRec.email === rec.email && dbEventDate.toISO() === eventDate.toISO();
-      })
-    ) {
+    } else if (!existsInDb) {
       await cancelEmailNotification(rec);
       await deleteByEmail(rec.email);
       console.log("🚫 Canceled notification for:", rec.email);
@@ -66,20 +66,24 @@ const checkAndSendEmails = async () => {
     await manageSavedRecords(savedRecordsList, recordList);
 
     const newRecords = filterNewRecords(recordList, savedRecordsList);
-    for (rec of newRecords) {
+    for (const rec of newRecords) {
       savedRecordsList.push(rec);
     }
     console.log("newRecords", newRecords.length);
 
     if (newRecords.length > 0) {
       for (const rec of newRecords) {
-        await scheduleEmailNotification(rec);
-        await addUser({
-          name: rec.name,
-          email: rec.email,
-          phone: rec.phone,
-          eventDate: rec.eventDate,
-        });
+        const eventDate = DateTime.fromISO(rec.eventDate, { zone: "Europe/Kyiv" });
+        const now = DateTime.now().setZone("Europe/Kyiv");
+        if (eventDate > now) {
+          await scheduleEmailNotification(rec);
+          await addUser({
+            name: rec.name,
+            email: rec.email,
+            phone: rec.phone,
+            eventDate: rec.eventDate,
+          });
+        }
       }
     }
   } catch (error) {
