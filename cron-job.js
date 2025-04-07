@@ -1,4 +1,12 @@
+require("dotenv").config();
 const { checkAndSendEmails } = require("./server.js");
+
 (async () => {
-  await checkAndSendEmails();
+  try {
+    await checkAndSendEmails();
+    process.exit(0);
+  } catch (error) {
+    console.error("❌ Cron job failed:", error);
+    process.exit(1);
+  }
 })();
