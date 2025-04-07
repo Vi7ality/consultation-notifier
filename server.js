@@ -95,7 +95,8 @@ console.log(
   "Checking API data:",
   DateTime.now().setZone("Europe/Kyiv").toLocaleString(DateTime.DATETIME_SHORT)
 );
-checkAndSendEmails();
+
+module.exports = { checkAndSendEmails };
 
 // cron.schedule("*/5 * * * *", async () => {
 //   console.log(
