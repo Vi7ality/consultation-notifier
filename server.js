@@ -91,10 +91,16 @@ const checkAndSendEmails = async () => {
   }
 };
 
-cron.schedule("*/5 * * * *", async () => {
-  console.log(
-    "Checking API data:",
-    DateTime.now().setZone("Europe/Kyiv").toLocaleString(DateTime.DATETIME_SHORT)
-  );
-  await checkAndSendEmails();
-});
+console.log(
+  "Checking API data:",
+  DateTime.now().setZone("Europe/Kyiv").toLocaleString(DateTime.DATETIME_SHORT)
+);
+await checkAndSendEmails();
+
+// cron.schedule("*/5 * * * *", async () => {
+//   console.log(
+//     "Checking API data:",
+//     DateTime.now().setZone("Europe/Kyiv").toLocaleString(DateTime.DATETIME_SHORT)
+//   );
+//   await checkAndSendEmails();
+// });
