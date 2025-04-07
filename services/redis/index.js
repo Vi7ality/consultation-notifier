@@ -1,8 +1,8 @@
-const { getUsers, saveUsers, addUser, deleteByEmail } = require("./redisService");
+const { getUsers, saveUsers, addUser, deleteSavedRec } = require("./redisService");
 
 module.exports = {
   getUsers,
   saveUsers,
   addUser,
-  deleteByEmail,
+  deleteSavedRec,
 };

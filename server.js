@@ -1,7 +1,7 @@
 require("dotenv").config();
 const cron = require("node-cron");
 const { DateTime } = require("luxon");
-const { getUsers, addUser, deleteByEmail } = require("./services/redis");
+const { getUsers, addUser, deleteSavedRec } = require("./services/redis");
 const { readData } = require("./services/jsonService");
 const { cancelEmailNotification, scheduleEmailNotification } = require("./services/sendpulse");
 const { fetchDataBase } = require("./services/database");
@@ -38,12 +38,12 @@ const manageSavedRecords = async (savedRecordsList, dbRecords = []) => {
     });
 
     if (eventDate < now && !existsInDb) {
-      await deleteByEmail(rec.email);
+      await deleteSavedRec(rec);
       console.log("🗑 Deleted old event:", rec);
     } else if (!existsInDb) {
       await cancelEmailNotification(rec);
-      await deleteByEmail(rec.email);
-      console.log("🚫 Canceled notification for:", rec.email);
+      await deleteSavedRec(rec);
+      console.log("🚫 Canceled notification for:", rec.email, rec.EventDate);
     }
   }
 };

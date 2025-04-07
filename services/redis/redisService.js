@@ -23,13 +23,13 @@ const addUser = async (user) => {
   await saveUsers(users);
 };
 
-const deleteByEmail = async (email) => {
+const deleteSavedRec = async ({ email, eventDate }) => {
   try {
     const users = await getUsers();
-    const filtered = users.filter((u) => u.email !== email);
+    const filtered = users.filter((u) => u.email !== email || u.eventDate !== eventDate);
     await saveUsers(filtered);
   } catch (error) {
-    console.error("Error deleting users", error.message);
+    console.error("Error deleting user by email and eventDate:", error.message);
   }
 };
 
@@ -37,5 +37,5 @@ module.exports = {
   getUsers,
   saveUsers,
   addUser,
-  deleteByEmail,
+  deleteSavedRec,
 };
