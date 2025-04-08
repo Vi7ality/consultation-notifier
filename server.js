@@ -1,9 +1,13 @@
 require("dotenv").config();
-const cron = require("node-cron");
+// const cron = require("node-cron");
 const { DateTime } = require("luxon");
 const { getUsers, addUser, deleteSavedRec } = require("./services/redis");
-const { readData } = require("./services/jsonService");
-const { cancelEmailNotification, scheduleEmailNotification } = require("./services/sendpulse");
+// const { readData } = require("./services/jsonService");
+const {
+  cancelEmailNotification,
+  scheduleEmailNotification,
+  createSPContact,
+} = require("./services/sendpulse");
 const { fetchDataBase } = require("./services/database");
 const { formatDate } = require("./utils");
 
@@ -12,8 +16,12 @@ const { formatDate } = require("./utils");
 const getRecordsList = (data) =>
   data.map(({ client, startDate, createDate, resultProcedures, courses }) => ({
     name: client.name,
+    firstName: client.firstName,
+    middleName: client.middleName,
+    lastName: client.lastName,
     email: client.email,
     phone: client.phone,
+    birthDate: client.birthDate,
     eventDate: formatDate(startDate),
     createDate: formatDate(createDate),
     cause: resultProcedures[0]?.procedureName || courses[0]?.title || "",
@@ -77,6 +85,7 @@ const checkAndSendEmails = async () => {
         const now = DateTime.now().setZone("Europe/Kyiv");
         if (eventDate > now) {
           await scheduleEmailNotification(rec);
+          await createSPContact(rec);
           await addUser({
             name: rec.name,
             email: rec.email,
