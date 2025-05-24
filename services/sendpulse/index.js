@@ -9,6 +9,9 @@ const SENDPULSE_CONTACTLIST_ID = process.env.SENDPULSE_CONTACTLIST_ID;
 
 const scheduleEmailNotification = async ({ name, email, phone, eventDate, cause }) => {
   try {
+    if (!email) {
+      throw new Error("Schedule notification error: email not found");
+    }
     const [date, time] = eventDate.split("T");
     const formattedTime = time.split(":").slice(0, 2).join(":");
 
@@ -31,6 +34,9 @@ const scheduleEmailNotification = async ({ name, email, phone, eventDate, cause 
 
 const cancelEmailNotification = async ({ name, email, phone, eventDate }, reason = "other") => {
   try {
+    if (!email) {
+      throw new Error("Cancel notification error: email not found");
+    }
     const [date, time] = eventDate.split("T");
     const formattedTime = time.split(":").slice(0, 2).join(":");
 
@@ -66,6 +72,9 @@ const getAPIToken = async () => {
 
 const createSPContact = async ({ email, phone, firstName, middleName, lastName, birthDate }) => {
   try {
+    if (!email) {
+      throw new Error("Create SP contact err: email not found");
+    }
     const accessToken = await getAPIToken();
     const [date, _] = birthDate.split("T");
     const res = await axios.post(
