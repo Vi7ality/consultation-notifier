@@ -2,36 +2,11 @@ require("dotenv").config();
 
 const { DateTime } = require("luxon");
 const { getUsers, addUser, deleteSavedRec } = require("./services/redis");
-const {
-  cancelEmailNotification,
-  scheduleEmailNotification,
-  createSPContact,
-} = require("./services/sendpulse");
+const { scheduleEmailNotification, createSPContact } = require("./services/sendpulse");
 const { fetchDataBase } = require("./services/database");
 const createRecordList = require("./utils/createRecordList");
 const filterNewRecords = require("./utils/filterNewRecords");
-
-const manageSavedRecords = async (savedRecordsList, dbRecords = []) => {
-  const now = DateTime.now().setZone("Europe/Kyiv");
-
-  for (const rec of savedRecordsList) {
-    const eventDate = DateTime.fromISO(rec.eventDate, { zone: "Europe/Kyiv" });
-
-    const existsInDb = dbRecords.some((dbRec) => {
-      const dbEventDate = DateTime.fromISO(dbRec.eventDate, { zone: "Europe/Kyiv" });
-      return dbRec.email === rec.email && dbEventDate.toISO() === eventDate.toISO();
-    });
-
-    if (eventDate < now && !existsInDb) {
-      await deleteSavedRec(rec);
-      console.log("🗑 Deleted old event:", rec);
-    } else if (!existsInDb) {
-      await cancelEmailNotification(rec);
-      await deleteSavedRec(rec);
-      console.log("🚫 Canceled notification for:", rec.email, rec.EventDate);
-    }
-  }
-};
+const { savedRecordsManager } = require("./utils");
 
 const checkAndSendEmails = async () => {
   try {
@@ -40,13 +15,13 @@ const checkAndSendEmails = async () => {
 
     if (data.length === 0) {
       console.log("No record was found");
-      await manageSavedRecords(savedRecordsList);
+      await savedRecordsManager(savedRecordsList);
       return;
     }
 
     const recordList = createRecordList(data);
 
-    await manageSavedRecords(savedRecordsList, recordList);
+    await savedRecordsManager(savedRecordsList, recordList);
 
     const newRecords = filterNewRecords(recordList, savedRecordsList);
 
