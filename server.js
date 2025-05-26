@@ -59,16 +59,16 @@ const checkAndSendEmails = async () => {
       for (const rec of newRecords) {
         const eventDate = DateTime.fromISO(rec.eventDate, { zone: "Europe/Kyiv" });
         const now = DateTime.now().setZone("Europe/Kyiv");
-        if (eventDate > now) {
+        if (eventDate > now && rec.email) {
           await scheduleEmailNotification(rec);
           await createSPContact(rec);
-          await addUser({
-            name: rec.name,
-            email: rec.email,
-            phone: rec.phone,
-            eventDate: rec.eventDate,
-          });
-        }
+        } else console.warn(`Email not provided`);
+        await addUser({
+          name: rec.name,
+          email: rec.email,
+          phone: rec.phone,
+          eventDate: rec.eventDate,
+        });
       }
     }
   } catch (error) {
